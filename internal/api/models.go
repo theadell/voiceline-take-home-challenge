@@ -12,6 +12,11 @@ type CreateUserRequest struct {
 
 type PasswordLoginRequest = CreateUserRequest
 
+type Oauth2SessionRequest struct {
+	Provider string `json:"provider" validate:"required"`
+	IdToken  string `json:"id_token" validate:"required"`
+}
+
 type UserResponse struct {
 	Email string `json:"email" `
 }
