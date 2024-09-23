@@ -76,7 +76,7 @@ func Run() error {
 		WriteTimeout:      5 * time.Second,
 	}
 
-	startServer(server, logger, cfg.Port)
+	startServer(server, logger, cfg.Host, cfg.Port)
 
 	waitForShutdown(server, logger)
 
@@ -145,9 +145,9 @@ func createDatabaseSqlStore(dbConnPool *sql.DB) (*db.SqlStore, *scs.SessionManag
 	return store, sessionManager
 }
 
-func startServer(server *http.Server, logger *slog.Logger, port int) {
+func startServer(server *http.Server, logger *slog.Logger, network string, port int) {
 	go func() {
-		logger.Info(fmt.Sprintf("server is running on port %d", port))
+		logger.Info("server is running", "network", network, "port", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("server failed to start", "err", err)
 			os.Exit(1)
