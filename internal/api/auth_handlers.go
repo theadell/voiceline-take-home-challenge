@@ -68,3 +68,19 @@ func (api *Api) passwordLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	api.setUserSession(w, r, user)
 }
+
+func (api *Api) userinfoHandler(w http.ResponseWriter, r *http.Request) {
+	user, ok := api.Sm.Get(r.Context(), userSessionKey).(db.User)
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+	WriteJSON(w, http.StatusOK, UserResponse{Email: user.Email})
+}
+
+func (api *Api) logoutHandler(w http.ResponseWriter, r *http.Request) {
+	if err := api.Sm.Destroy(r.Context()); err != nil {
+		api.serverError(w, errors.New("failed to destroy user session"), "error", err.Error())
+		return
+	}
+}
