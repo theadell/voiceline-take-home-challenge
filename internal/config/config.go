@@ -7,15 +7,17 @@ import (
 )
 
 type Config struct {
-	Port               int
-	Host               string
-	DatabaseURL        string
-	MigrateDB          bool
-	Oauth2ProviderName string
-	OAuth2DiscoveryUrl string
-	OAuth2ClientId     string
-	OAuth2ClientSecret string
-	Oauth2CallbackUri  string
+	Port                   int
+	Host                   string
+	DatabaseURL            string
+	MigrateDB              bool
+	Oauth2ProviderName     string
+	OAuth2DiscoveryUrl     string
+	OAuth2ClientId         string
+	OAuth2ClientSecret     string
+	Oauth2CallbackUri      string
+	OAuth2DeviceClientId   string
+	OAuth2DeviceCientIdExt string
 }
 
 func LoadConfig() *Config {
@@ -34,6 +36,9 @@ func LoadConfig() *Config {
 
 	config.Oauth2CallbackUri = getEnvString("OAUTH2_CALLBACK_URI", "http://localhost:8080/oauth2/google/callback")
 
+	config.OAuth2DeviceClientId = getEnvString("OAUTH2_DEVICE_CLIENT_ID", "44913867410-2568om3gnua95hd47mrcn0tbao6iv6q4.apps.googleusercontent.com")
+	config.OAuth2DeviceCientIdExt = getEnvString("OAUTH2_DEVICE_CLIENT_EXT", "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")
+
 	flag.IntVar(&config.Port, "port", config.Port, "TCP Port to bind server to")
 	flag.StringVar(&config.Host, "host", config.Host, "Network to bind to")
 
@@ -45,6 +50,9 @@ func LoadConfig() *Config {
 	flag.StringVar(&config.OAuth2ClientId, "oauth2-client-id", config.OAuth2ClientId, "OAuth2 Client_id")
 	flag.StringVar(&config.OAuth2ClientSecret, "oauth2-client-secret", config.OAuth2ClientSecret, "OAuth2 Client_secret")
 	flag.StringVar(&config.Oauth2CallbackUri, "oauth2-redirect-uri", config.Oauth2CallbackUri, "OAuth2 Callback URI")
+
+	flag.StringVar(&config.OAuth2DeviceClientId, "oauth2-device-client-id", config.OAuth2DeviceClientId, "OAuth2 device client id")
+	flag.StringVar(&config.OAuth2DeviceCientIdExt, "oauth2-device-client-id-ext", config.OAuth2DeviceCientIdExt, "OAuth2 device client Id Extension")
 
 	flag.Parse()
 
