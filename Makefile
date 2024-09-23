@@ -1,5 +1,8 @@
 BIN_DIR = bin
 
+mock:
+	mockgen -source=internal/db/querier.go -destination=internal/db/mock/querier_mock.go -package=mock
+
 db-gen:
 	sqlc generate
 
@@ -13,4 +16,4 @@ run: build
 	./$(BIN_DIR)/api -migrate-db
 
 
-.PHONY: db-gen build test run 
+.PHONY: mock db-gen build test run 
