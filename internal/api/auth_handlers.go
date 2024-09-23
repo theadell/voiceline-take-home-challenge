@@ -32,12 +32,13 @@ func (api *Api) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var sqlErr sqlite3.Error
 		if errors.As(err, &sqlErr) {
-			if sqlErr.ExtendedCode == sqlite3.ErrConstraintPrimaryKey {
+			if sqlErr.Code == sqlite3.ErrConstraint {
 				api.badRequestResponse(w, "A user with that email already exists")
+				return
 			}
-		} else {
-			api.serverError(w, err)
 		}
+		api.serverError(w, err)
+		return
 	}
 	w.WriteHeader(http.StatusCreated)
 }
