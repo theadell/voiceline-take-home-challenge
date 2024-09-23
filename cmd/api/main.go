@@ -12,8 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	"adelhub.com/voiceline/internal/api"
 	"adelhub.com/voiceline/internal/config"
+	"adelhub.com/voiceline/internal/db"
+	"adelhub.com/voiceline/internal/session"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/theadell/authress"
+	"golang.org/x/oauth2"
 
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -43,10 +50,27 @@ func Run() error {
 			return fmt.Errorf("failed to migrate database: %w", err)
 		}
 	}
+	providersValidator, providers, err := createOAuth2Config(*cfg)
+	if err != nil {
+		return fmt.Errorf("failed to initialize OAuth2 config: %w", err)
+	}
+
+	validate := validator.New()
+
+	store, sessionManager := createDatabaseSqlStore(dbConnPool)
+
+	apiInstance := api.New(api.Dependencies{
+		Logger:             *logger,
+		Store:              store,
+		Validate:           validate,
+		Sm:                 sessionManager,
+		Providers:          providers,
+		ProvidersValidator: providersValidator,
+	})
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		Handler:           http.NewServeMux(),
+		Handler:           apiInstance.Router(),
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 		WriteTimeout:      5 * time.Second,
@@ -91,6 +115,34 @@ func migrateDatabase(databaseURL string, logger *slog.Logger) error {
 	}
 
 	return nil
+}
+
+func createOAuth2Config(cfg config.Config) (*authress.Validator, map[string]*oauth2.Config, error) {
+	providersValidator, err := authress.New(authress.WithDiscovery(cfg.OAuth2DiscoveryUrl))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	oauth2ClientConfig := &oauth2.Config{
+		ClientID:     cfg.OAuth2ClientId,
+		ClientSecret: cfg.OAuth2ClientSecret,
+		RedirectURL:  cfg.Oauth2CallbackUri,
+		Endpoint:     providersValidator.ClientEndpoint(),
+		Scopes:       []string{"email", "profile", "openid"},
+	}
+
+	providers := map[string]*oauth2.Config{
+		cfg.Oauth2ProviderName: oauth2ClientConfig,
+	}
+
+	return providersValidator, providers, nil
+}
+
+func createDatabaseSqlStore(dbConnPool *sql.DB) (*db.SqlStore, *scs.SessionManager) {
+	querier := db.New(dbConnPool)
+	store := db.NewSqlStore(dbConnPool, querier)
+	sessionManager := session.NewManager(dbConnPool)
+	return store, sessionManager
 }
 
 func startServer(server *http.Server, logger *slog.Logger, port int) {
