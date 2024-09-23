@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Voiceline Take-home task - Auth API
+  version: 0.1.0
+  description: API for user authentication with Password and oauth2 provider Login. 
+
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+components:
+  securitySchemes:
+    SessionCookieAuth:
+      type: apiKey
+      in: cookie
+      name: GO_SESSION_ID
+      description: |
+        Session-based authentication using HTTP-only, secure cookies with server-side state storage.
+        The `GO_SESSION_ID` cookie is set as authenticated after a successful login (via email/password or OAuth2 ID token)
+        To login invoke `/auth/session` or `/oauth2/{provider}/auth`
+
+paths:
+  /auth/signup:
+    post:
+      summary: "Register a new user"
+      description: "Creates a new user account with the provided email and password."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: "The user's email address."
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: "The user's password"
+      responses:
+        '201':
+          description: "User successfully registered"
+        '400':
+          description: "Invalid request (e.g., email format or password too short)"
+        '500':
+          description: "Server error"
+      tags:
+        - "Authentication"
+
+  /auth/userinfo:
+    post:
+      summary: "Get authenticated user info"
+      description: "Returns the user's information. The user must be authenticated via session cookie."
+      responses:
+        '200':
+          description: "User info retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    description: "The authenticated user's email"
+        '401':
+          description: "Unauthorized."
+        '500':
+          description: "Server error"
+      tags:
+        - "Authentication"
+      security:
+        - SessionCookieAuth: []
+
+
+  /auth/session:
+    post:
+      summary: "Login user and obtain a session"
+      description: "Authenticates a user using email and password, and sets a session if successful."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: "The user's email address."
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  description: "The user's password"
+      responses:
+        '200':
+          description: "User successfully logged in, session set"
+        '400':
+          description: "Invalid email or password."
+        '500':
+          description: "Server error"
+      tags:
+        - "Authentication"
+
+    delete:
+      summary: "Logout user and delete session"
+      description: "Logs out the authenticated user by deleting the session."
+      responses:
+        '204':
+          description: "Session successfully deleted, user logged out"
+        '401':
+          description: "Unauthorized. User must be authenticated."
+        '500':
+          description: "Server error"
+      tags:
+        - "Authentication"
+      security:
+        - SessionCookieAuth: []
+
+
+  /oauth2/{provider}/session:
+    post:
+      summary: "Login user using OAuth2 ID token"
+      description: |
+        Logs in the user by validating the provided OAuth2 ID token and creates a session if successful.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - id_token
+              properties:
+                provider:
+                  type: string
+                  description: "The OAuth2 provider used (e.g., 'google', 'facebook')."
+                id_token:
+                  type: string
+                  description: "The ID token returned by the OAuth2 provider."
+      responses:
+        '200':
+          description: "User successfully logged in, session set"
+        '400':
+          description: "Invalid ID token or provider."
+        '500':
+          description: "Server error"
+      tags:
+        - "OAuth2"

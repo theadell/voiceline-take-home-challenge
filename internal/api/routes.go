@@ -16,5 +16,8 @@ func (api *Api) Router() http.Handler {
 
 	mux.HandleFunc("POST /oauth2/{provider}/session", api.oauth2SessionHandler)
 
+	mux.HandleFunc("GET /docs", docsUIHndler)
+	mux.HandleFunc("GET /docs/swagger.yaml", specHandler)
+
 	return Chain(mux, api.Sm.LoadAndSave)
 }
