@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
+	"slices"
 
 	"adelhub.com/voiceline/internal/db"
 	"github.com/go-playground/validator/v10"
@@ -89,4 +91,7 @@ func (api *Api) setUserSession(w http.ResponseWriter, r *http.Request, user db.U
 		User:          UserResponse{Email: user.Email},
 		SessionActive: true,
 	})
+}
+func (api *Api) isProviderSupported(provider string) bool {
+	return slices.Contains(slices.Collect(maps.Keys(api.Providers)), provider)
 }

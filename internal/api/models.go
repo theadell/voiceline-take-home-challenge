@@ -1,6 +1,7 @@
 package api
 
 const userSessionKey = "user-session"
+const oauth2StateKey = "oauth2-req-state"
 
 type envelope map[string]any
 
@@ -18,4 +19,12 @@ type UserResponse struct {
 type SessionResponse struct {
 	User          UserResponse `json:"user"`
 	SessionActive bool         `json:"session_active"`
+}
+
+type OAuth2State struct {
+	Provider string
+	Next     string
+	State    string
+	Nonce    string
+	Verifier string
 }
